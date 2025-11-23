@@ -1,7 +1,9 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:random_number_generator/component/number_to_image.dart';
 import 'package:random_number_generator/constant/color.dart';
+import 'package:random_number_generator/screen/setting_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,17 +14,35 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<int> numbers = [123, 456, 789];
+  int maxNumber = 1000;
 
   void generateRandomNumbers() {
     final rand = Random();
     final List<int> newNumbers = [];
     while(newNumbers.length < 3) {
-      newNumbers.add(rand.nextInt(1000));
+      newNumbers.add(rand.nextInt(maxNumber));
     }
 
     setState(() {
       numbers = newNumbers;
     });
+  }
+
+  void onSettingIconPressed() async {
+    // context는 전역적으로 접근 가능
+    // await로 result 값을 받을 수 있음
+    final result = await Navigator.of(context).push(
+      // MaterialPageRoute: 새로운 화면으로 이동할 때 사용하는 위젯
+      MaterialPageRoute(
+        // builder 함수는 기본적으로 BuildContext를 인자로 받음
+          builder: (BuildContext context) {
+            return SettingScreen(maxNumber: maxNumber,);
+          },
+      ),
+    );
+
+    // 그냥 뒤로가기 했을 경우 null이 반환될 수 있기 때문에 null 처리
+    maxNumber = result ?? maxNumber;
   }
 
   @override
@@ -35,7 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _Header(),
+              _Header(onPressed: onSettingIconPressed,),
               _Body(numbers: numbers,),
               _Footer(onPressed: generateRandomNumbers),
             ],
@@ -47,7 +67,12 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({super.key});
+  final VoidCallback onPressed;
+
+  const _Header({
+    required this.onPressed,
+    super.key
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +88,7 @@ class _Header extends StatelessWidget {
           ),
         ),
         IconButton(
-          onPressed: () {},
+          onPressed: onPressed,
           icon: Icon(Icons.settings, color: Colors.red),
         ),
       ],
@@ -86,20 +111,7 @@ class _Body extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: numbers
-            .map((e) => e.toString().split(''))
-            .map(
-              (e) => Row(
-                children: e
-                    .map(
-                      (el) => Image.asset(
-                        'asset/img/$el.png',
-                        width: 50.0,
-                        height: 70.0,
-                      ),
-                    )
-                    .toList(),
-              ),
-            )
+            .map((e) => NumberToImage(number: e))
             .toList(),
       ),
     );
